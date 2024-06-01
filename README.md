@@ -18,7 +18,7 @@ The primary purpose of the plugin is to support those wishing to learn languages
 
 ## How To Use
 
-Texthooker will automatically copy all the game text it is able to to the system clipboard (except item and action tooltips which require a hotkey to extract). What the text hooker extracts can be configured in the configuration menu accessable via either the Dalamud plugin page or through the interface accessable via the above chat command. 
+Texthooker will automatically copy all the game text it is able to to the system clipboard (except item and action tooltips which require a hotkey to extract). Item and action tooltips can be extracted when mouse hovering over a item or action and pressing the configured hotkey. The default hotkey is ***Shift+t***. What the text hooker extracts can be configured in the configuration menu accessable via either the Dalamud plugin page or through the interface accessable via the above chat command. The logger will list all the hooked text as configured in the configuration window, this text can be recopied to clipboard by pressing the copy button that appears next to the text when hovered over by mouse. 
 
 FFXIV Text Hooker was designed to be used in conjuction with language learning pipelines recommended by communities such as <a href="https://refold.la/"> Refold </a> or <a href="https://learnjapanese.moe/"> TheMoeWay </a>. A basic setup would look as follows: 
 * FFXIV Text Hooker extracts the game text to system clipboard.
@@ -30,6 +30,10 @@ Happy language learning!
 ## To do
 * Extract Quest Log text
 * Extract Party Finder text
+* Extract speech bubbles
+
+## Known issues
+* (Japanese) Text with furigana on top will not be copied.
 
 ## Thanks
 - goaats for FFXIVQuickLauncher

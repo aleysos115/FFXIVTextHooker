@@ -12,6 +12,7 @@ using XivCommon.Functions;
 using System;
 using XivCommon.Functions.Tooltips;
 using Dalamud.Game.Gui;
+using System.Runtime.Versioning;
 
 namespace FFXIVTextHooker;
 
@@ -25,7 +26,7 @@ public sealed class Plugin : IDalamudPlugin
     private ICommandManager CommandManager { get; init; }
     public Configuration Configuration { get; init; }
 
-    public readonly WindowSystem WindowSystem = new("SamplePlugin");
+    public readonly WindowSystem WindowSystem = new("FFXIVTextHooker");
     private ConfigWindow ConfigWindow { get; init; }
     private MainWindow MainWindow { get; init; }
 
@@ -63,7 +64,7 @@ public sealed class Plugin : IDalamudPlugin
 
         CommandManager.AddHandler(CommandName, new CommandInfo(OnCommand)
         {
-            HelpMessage = "A useful message to display in /xlhelp"
+            HelpMessage = "Opens the text hooker menu"
         });
 
         PluginInterface.UiBuilder.Draw += DrawUI;

@@ -1,12 +1,9 @@
 {
   "Author": "Vending Machine",
-  "Name": "FFXIVTextHooker",
-  "Punchline": "A short one-liner that shows up in /xlplugins.",
-  "Description": "A description that shows up in /xlplugins. List any major slash-command(s).",
+  "Name": "Text Hooker",
+  "Punchline": "A Text Hooker / Text Extractor for language learning in FFXIV",
+  "Description": "FFXIV Text Hooker will automatically copy the following text to the system clipboard: \n- Cutscene / NPC Text \n- Battle Text \n- Player Chat (All chat sources) \n- Item and Action tooltips (Configurable hotkey press required)",
   "ApplicableVersion": "any",
-  "Tags": [
-    "sample",
-    "plugin",
-    "goats"
-  ]
+  "RepoUrl": "https://github.com/aleysos115/FFXIVTextHooker",
+  "Tags": [ "ffxiv", "Dalamud", "plugin", "text", "extractor", "hook", "hooker", "Utility"],
 }

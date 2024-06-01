@@ -31,4 +31,10 @@
     <PackageReference Include="Dalamud.DrunkenToad" Version="1.8.15" />
     <PackageReference Include="XivCommon" Version="9.0.0" />
   </ItemGroup>
+
+  <ItemGroup>
+    <None Update="FFXIVTextHooker.json">
+      <CopyToOutputDirectory>Always</CopyToOutputDirectory>
+    </None>
+  </ItemGroup>
 </Project>

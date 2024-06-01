@@ -1,28 +1,21 @@
 using System;
 using System.Collections.Generic;
 using System.Numerics;
-using Dalamud.Interface.Internal;
-using Dalamud.Interface.Utility;
 using Dalamud.Interface.Windowing;
-using FFXIVTextHooker;
 using ImGuiNET;
 
 namespace FFXIVTextHooker.Windows;
 
 public class MainWindow : Window, IDisposable
 {
-    private IDalamudTextureWrap? GoatImage;
     private Plugin Plugin;
 
     List<TextEntry> textEntries;
 
     bool newItemAdded = false;
 
-    // We give this window a hidden ID using ##
-    // So that the user will see "My Amazing Window" as window title,
-    // but for ImGui the ID is "My Amazing Window##With a hidden ID"
-    public MainWindow(Plugin plugin, IDalamudTextureWrap? goatImage)
-        : base("FFXIV Text Hooker##With a hidden ID", ImGuiWindowFlags.NoScrollbar | ImGuiWindowFlags.NoScrollWithMouse)
+    public MainWindow(Plugin plugin)
+        : base("FFXIV Text Hooker##Main Window", ImGuiWindowFlags.NoScrollbar | ImGuiWindowFlags.NoScrollWithMouse)
     {
         SizeConstraints = new WindowSizeConstraints
         {
@@ -31,7 +24,6 @@ public class MainWindow : Window, IDisposable
         };
 
         textEntries = new List<TextEntry>();
-        GoatImage = goatImage;
         Plugin = plugin;
     }
 
@@ -84,19 +76,6 @@ public class MainWindow : Window, IDisposable
         {
             textEntries.Clear();
         }
-
-        /*
-        ImGui.Text("Have a goat:");
-        if (GoatImage != null)
-        {
-            ImGuiHelpers.ScaledIndent(55f);
-            ImGui.Image(GoatImage.ImGuiHandle, new Vector2(GoatImage.Width, GoatImage.Height));
-            ImGuiHelpers.ScaledIndent(-55f);
-        }
-        else
-        {
-            ImGui.Text("Image not found.");
-        }*/
     }
 
     public void AddTextEntry(string _Source, string _Time, string _Text)

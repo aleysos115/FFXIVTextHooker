@@ -1,4 +1,5 @@
 using System;
+using System.Linq;
 using System.Numerics;
 using Dalamud.Interface.Utility;
 using Dalamud.Interface.Windowing;
@@ -11,14 +12,8 @@ public class ConfigWindow : Window, IDisposable
     private const float INDENT_SIZE = 10.0f;
     private Configuration Configuration;
 
-    // We give this window a constant ID using ###
-    // This allows for labels being dynamic, like "{FPS Counter}fps###XYZ counter window",
-    // and the window ID will always be "###XYZ counter window" for ImGui
-    public ConfigWindow(Plugin plugin) : base("FFXIV Text Hooker Settings###With a constant ID")
+    public ConfigWindow(Plugin plugin) : base("FFXIV Text Hooker Settings###Config Window")
     {
-        //Flags = ImGuiWindowFlags.NoResize | ImGuiWindowFlags.NoCollapse | ImGuiWindowFlags.NoScrollbar |
-        //        ImGuiWindowFlags.NoScrollWithMouse;
-
         Size = new Vector2(232, 75);
         SizeCondition = ImGuiCond.FirstUseEver;
 
@@ -29,15 +24,7 @@ public class ConfigWindow : Window, IDisposable
 
     public override void PreDraw()
     {
-        // Flags must be added or removed before Draw() is being called, or they won't apply
-        //if (Configuration.IsConfigWindowMovable)
-        //{
-        //    Flags &= ~ImGuiWindowFlags.NoMove;
-        //}
-        //else
-        //{
-        //    Flags |= ImGuiWindowFlags.NoMove;
-        //}
+
     }
 
     public override void Draw()
@@ -50,7 +37,7 @@ public class ConfigWindow : Window, IDisposable
         }
 
         var hookBattleText = Configuration.HookBattleText;
-        if (ImGui.Checkbox("Hook battle text", ref hookText))
+        if (ImGui.Checkbox("Hook battle text", ref hookBattleText))
         {
             Configuration.HookBattleText = hookBattleText;
             Configuration.Save();
@@ -140,56 +127,56 @@ public class ConfigWindow : Window, IDisposable
                 }
 
                 var ls1 = Configuration.HookChatLs1;
-                if (ImGui.Checkbox("Ls1", ref ls1))
+                if (ImGui.Checkbox("LinkShell1", ref ls1))
                 {
                     Configuration.HookChatLs1 = ls1;
                     Configuration.Save();
                 }
 
                 var ls2 = Configuration.HookChatLs2;
-                if (ImGui.Checkbox("Ls2", ref ls2))
+                if (ImGui.Checkbox("LinkShell2", ref ls2))
                 {
                     Configuration.HookChatLs2 = ls2;
                     Configuration.Save();
                 }
 
                 var ls3 = Configuration.HookChatLs3;
-                if (ImGui.Checkbox("Ls3", ref ls3))
+                if (ImGui.Checkbox("LinkShell3", ref ls3))
                 {
                     Configuration.HookChatLs3 = ls3;
                     Configuration.Save();
                 }
 
                 var ls4 = Configuration.HookChatLs4;
-                if (ImGui.Checkbox("Ls4", ref ls4))
+                if (ImGui.Checkbox("LinkShell4", ref ls4))
                 {
                     Configuration.HookChatLs4 = ls4;
                     Configuration.Save();
                 }
 
                 var ls5 = Configuration.HookChatLs5;
-                if (ImGui.Checkbox("Ls5", ref ls5))
+                if (ImGui.Checkbox("LinkShell5", ref ls5))
                 {
                     Configuration.HookChatLs5 = ls5;
                     Configuration.Save();
                 }
 
                 var ls6 = Configuration.HookChatLs6;
-                if (ImGui.Checkbox("Ls6", ref ls6))
+                if (ImGui.Checkbox("LinkShell6", ref ls6))
                 {
                     Configuration.HookChatLs6 = ls6;
                     Configuration.Save();
                 }
 
                 var ls7 = Configuration.HookChatLs7;
-                if (ImGui.Checkbox("Ls7", ref ls7))
+                if (ImGui.Checkbox("LinkShell7", ref ls7))
                 {
                     Configuration.HookChatLs7 = ls7;
                     Configuration.Save();
                 }
 
                 var ls8 = Configuration.HookChatLs8;
-                if (ImGui.Checkbox("Ls8", ref ls8))
+                if (ImGui.Checkbox("LinkShell8", ref ls8))
                 {
                     Configuration.HookChatLs8 = ls8;
                     Configuration.Save();
@@ -241,13 +228,6 @@ public class ConfigWindow : Window, IDisposable
                 if (ImGui.Checkbox("PvPTeam", ref pvPTeam))
                 {
                     Configuration.HookChatPvPTeam = pvPTeam;
-                    Configuration.Save();
-                }
-
-                var crossLinkShell1 = Configuration.HookChatCrossLinkShell1;
-                if (ImGui.Checkbox("CrossLinkShell1", ref crossLinkShell1))
-                {
-                    Configuration.HookChatCrossLinkShell1 = crossLinkShell1;
                     Configuration.Save();
                 }
 
@@ -304,6 +284,13 @@ public class ConfigWindow : Window, IDisposable
                 if (ImGui.Checkbox("RetainerSale", ref retainerSale))
                 {
                     Configuration.HookChatRetainerSale = retainerSale;
+                    Configuration.Save();
+                }
+
+                var crossLinkShell1 = Configuration.HookChatCrossLinkShell1;
+                if (ImGui.Checkbox("CrossLinkShell1", ref crossLinkShell1))
+                {
+                    Configuration.HookChatCrossLinkShell1 = crossLinkShell1;
                     Configuration.Save();
                 }
 
@@ -369,7 +356,7 @@ public class ConfigWindow : Window, IDisposable
         }
 
         var hookTooltip = Configuration.HookTooltips;
-        if (ImGui.Checkbox("Hook chat", ref hookTooltip))
+        if (ImGui.Checkbox("Hook tooltips", ref hookTooltip))
         {
             Configuration.HookTooltips = hookTooltip;
             Configuration.Save();
@@ -378,7 +365,37 @@ public class ConfigWindow : Window, IDisposable
         if(hookTooltip)
         {
             ImGuiHelpers.ScaledIndent(INDENT_SIZE);
+            ImGui.Text("Modifier key");
+            int modifier = Hotkey.EnumToIndex(Configuration.ModifierKey);
+            if(ImGui.Combo("##ModifierKey", ref modifier, Hotkey.Names.ToArray(), Hotkey.Names.Length))
+            {
+                Configuration.ModifierKey = Hotkey.IndexToEnum(modifier);
+                Configuration.Save();
+            }
 
+            ImGui.Spacing();
+            int primary = Hotkey.EnumToIndex(Configuration.PrimaryKey);
+            if (ImGui.Combo("##PrimaryKey", ref primary, Hotkey.Names.ToArray(), Hotkey.Names.Length))
+            {
+                Configuration.PrimaryKey = Hotkey.IndexToEnum(primary);
+                Configuration.Save();
+            }
+
+            ImGui.Spacing();
+            var hookItemTooltip = Configuration.HookItemTooltips;
+            if(ImGui.Checkbox("Hook Item Tooltips", ref hookItemTooltip))
+            {
+                Configuration.HookItemTooltips = hookItemTooltip;
+                Configuration.Save();
+            }
+
+            ImGui.Spacing();
+            var hookActionTooltip = Configuration.HookActionTooltips;
+            if(ImGui.Checkbox("Hook Action Tooltips", ref hookActionTooltip))
+            {
+                Configuration.HookActionTooltips = hookActionTooltip;
+                Configuration.Save();
+            }
             ImGuiHelpers.ScaledIndent(-INDENT_SIZE);
         }
     }

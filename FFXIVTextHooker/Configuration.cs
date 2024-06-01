@@ -60,7 +60,7 @@ public class Configuration : IPluginConfiguration
 
     public bool HookTooltips { get; set; } = true;
     public Hotkey.Enum ModifierKey { get; set; } = Hotkey.Enum.VkShift;
-    public Hotkey.Enum PrimaryKey { get; set; } = Hotkey.Enum.VkC;
+    public Hotkey.Enum PrimaryKey { get; set; } = Hotkey.Enum.VkT;
     public bool HookActionTooltips { get; set; } = true;
     public bool HookItemTooltips { get; set; } = true; 
     // the below exist just to make saving less cumbersome

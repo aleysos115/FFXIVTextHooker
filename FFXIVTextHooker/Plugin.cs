@@ -9,12 +9,6 @@ using Dalamud.Game.Text.SeStringHandling;
 using FFXIVTextHooker.Windows;
 using XivCommon;
 using XivCommon.Functions;
-using Lumina.Data.Parsing;
-using Dalamud.Logging;
-using static System.Net.Mime.MediaTypeNames;
-using System.Xml.Linq;
-using System.Windows.Forms;
-using FFXIVClientStructs.FFXIV.Client.System.Input;
 using System;
 using XivCommon.Functions.Tooltips;
 using Dalamud.Game.Gui;
@@ -45,7 +39,6 @@ public sealed class Plugin : IDalamudPlugin
     public Plugin(
         [RequiredVersion("1.0")] DalamudPluginInterface pluginInterface,
         [RequiredVersion("1.0")] ICommandManager commandManager,
-        [RequiredVersion("1.0")] ITextureProvider textureProvider,
         [RequiredVersion("1.0")] IKeyState keyState,
         [RequiredVersion("1.0")] IFramework framework)
     {
@@ -62,11 +55,8 @@ public sealed class Plugin : IDalamudPlugin
         // you might normally want to embed resources and load them from the manifest stream
         var file = new FileInfo(Path.Combine(PluginInterface.AssemblyLocation.Directory?.FullName!, "goat.png"));
 
-        // ITextureProvider takes care of the image caching and dispose
-        var goatImage = textureProvider.GetTextureFromFile(file);
-
         ConfigWindow = new ConfigWindow(this);
-        MainWindow = new MainWindow(this, goatImage);
+        MainWindow = new MainWindow(this);
 
         WindowSystem.AddWindow(ConfigWindow);
         WindowSystem.AddWindow(MainWindow);
@@ -99,8 +89,11 @@ public sealed class Plugin : IDalamudPlugin
     {
         if(IsKeyBindPressed())
         {
-            if(hoveredItem != null) CopyToClipboard("Item Tooltip", hoveredItem[ItemTooltipString.Name].TextValue);
-            if(hoveredAction != null) CopyToClipboard("Action Tooltip", hoveredAction[ActionTooltipString.Name].TextValue);
+            if (Configuration.HookTooltips)
+            {
+                if (hoveredItem != null && Configuration.HookItemTooltips) PrintItemTooltip(hoveredItem);
+                if (hoveredAction != null && Configuration.HookActionTooltips) PritnActionTooltip(hoveredAction);
+            }
         }
     }
 
@@ -270,7 +263,7 @@ public sealed class Plugin : IDalamudPlugin
     //Note: GetRawValue ~ 3 = KeyPressed, 1 = KeyDown, 4 = KeyUp
     public bool IsKeyBindPressed()
     {
-        //if (!this.Configuration.KeybindEnabled) return true;
+        if (this.Configuration.ModifierKey == Hotkey.Enum.VkNone && this.Configuration.PrimaryKey == Hotkey.Enum.VkNone) return false;
         if (this.Configuration.PrimaryKey == Hotkey.Enum.VkNone)
         {
             return KeyState.GetRawValue((byte)this.Configuration.ModifierKey) == 3;
@@ -288,14 +281,152 @@ public sealed class Plugin : IDalamudPlugin
     {
         hoveredItem = itemTooltip;
         hoveredAction = null;
-        //CopyToClipboard("Item Tooltip", itemTooltip[ItemTooltipString.Name].TextValue);
+    }
+
+    private void PrintItemTooltip(ItemTooltip itemTooltip)
+    {
+        string output;
+
+        output = string.Format("{0}\n", itemTooltip[ItemTooltipString.Name].TextValue);
+        if ((itemTooltip.Fields & ItemTooltipFields.GlamourIndicator) == ItemTooltipFields.GlamourIndicator)
+            output += string.Format("({0})\n", itemTooltip[ItemTooltipString.GlamourName].TextValue);
+        output += string.Format("{0}\n", itemTooltip[ItemTooltipString.Type].TextValue);
+        if ((itemTooltip.Fields & ItemTooltipFields.Stat1) == ItemTooltipFields.Stat1)
+            output += string.Format("{0}: {1} {2}\n", itemTooltip[ItemTooltipString.Stat1Label].TextValue,
+                                                      itemTooltip[ItemTooltipString.Stat1].TextValue,
+                                                      itemTooltip[ItemTooltipString.Stat1Delta]);
+        if ((itemTooltip.Fields & ItemTooltipFields.Stat2) == ItemTooltipFields.Stat2)
+            output += string.Format("{0}: {1} {2}\n", itemTooltip[ItemTooltipString.Stat2Label].TextValue,
+                                                      itemTooltip[ItemTooltipString.Stat2].TextValue,
+                                                      itemTooltip[ItemTooltipString.Stat2Delta]);
+        if ((itemTooltip.Fields & ItemTooltipFields.Stat3) == ItemTooltipFields.Stat3)
+            output += string.Format("{0}: {1} {2}\n", itemTooltip[ItemTooltipString.Stat3Label].TextValue,
+                                                      itemTooltip[ItemTooltipString.Stat3].TextValue,
+                                                      itemTooltip[ItemTooltipString.Stat3Delta]);
+        if ((itemTooltip.Fields & ItemTooltipFields.Description) == ItemTooltipFields.Description)
+            output += string.Format("{0}\n", itemTooltip[ItemTooltipString.Description].TextValue);
+        output += string.Format("{0}\n", itemTooltip[ItemTooltipString.Quantity].TextValue);
+        if ((itemTooltip.Fields & ItemTooltipFields.Effects) == ItemTooltipFields.Effects)
+            output += string.Format("{0}: {1}\n", itemTooltip[ItemTooltipString.EffectsLabel].TextValue,
+                                                  itemTooltip[ItemTooltipString.Effects].TextValue);
+        if ((itemTooltip.Fields & ItemTooltipFields.Levels) == ItemTooltipFields.Levels)
+        {
+            if (itemTooltip[ItemTooltipString.EquipJobs].TextValue != string.Empty)
+                output += string.Format("{0}\n", itemTooltip[ItemTooltipString.EquipJobs].TextValue);
+            output += string.Format("{0}\n", itemTooltip[ItemTooltipString.EquipLevel].TextValue);
+
+            //Only present when equip level is present
+            output += string.Format("{0}\n", itemTooltip[ItemTooltipString.Level].TextValue);
+        }
+        if ((itemTooltip.Fields & ItemTooltipFields.VendorSellPrice) == ItemTooltipFields.VendorSellPrice)
+            output += string.Format("{0}\n", itemTooltip[ItemTooltipString.VendorSellPrice].TextValue);
+        if ((itemTooltip.Fields & ItemTooltipFields.Crafter) == ItemTooltipFields.Crafter)
+            output += string.Format("{0}\n", itemTooltip[ItemTooltipString.Crafter].TextValue);
+        //output += string.Format("{0}\n", itemTooltip[ItemTooltipString.Condition].TextValue);
+
+        //Only present on equipment
+        if ((itemTooltip.Fields & ItemTooltipFields.Levels) == ItemTooltipFields.Levels)
+            output += string.Format("{0}: {1}\n", itemTooltip[ItemTooltipString.SpiritbondLabel].TextValue,
+                                                  itemTooltip[ItemTooltipString.Spiritbond].TextValue);
+        
+        if ((itemTooltip.Fields & ItemTooltipFields.Bonuses) == ItemTooltipFields.Bonuses)
+        {
+            output += string.Format("{0}\n", itemTooltip[ItemTooltipString.BonusesLabel].TextValue);
+            if (itemTooltip[ItemTooltipString.Bonus1].TextValue != string.Empty)
+                output += string.Format("\t{0}\n", itemTooltip[ItemTooltipString.Bonus1].TextValue);
+            if (itemTooltip[ItemTooltipString.Bonus2].TextValue != string.Empty)
+                output += string.Format("\t{0}\n", itemTooltip[ItemTooltipString.Bonus2].TextValue);
+            if (itemTooltip[ItemTooltipString.Bonus3].TextValue != string.Empty)
+                output += string.Format("\t{0}\n", itemTooltip[ItemTooltipString.Bonus3].TextValue);
+            if (itemTooltip[ItemTooltipString.Bonus4].TextValue != string.Empty)
+                output += string.Format("\t{0}\n", itemTooltip[ItemTooltipString.Bonus4].TextValue);
+        }
+        if ((itemTooltip.Fields & ItemTooltipFields.Materia) == ItemTooltipFields.Materia)
+        {
+            output += string.Format("{0}\n", itemTooltip[ItemTooltipString.MateriaLabel].TextValue);
+            if (itemTooltip[ItemTooltipString.Materia1].TextValue != string.Empty)
+                output += string.Format("\t{0}\t{1}\n", itemTooltip[ItemTooltipString.Materia1].TextValue,
+                                                      itemTooltip[ItemTooltipString.Materia1Effect].TextValue);
+            if (itemTooltip[ItemTooltipString.Materia2].TextValue != string.Empty)
+                output += string.Format("\t{0}\t{1}\n", itemTooltip[ItemTooltipString.Materia2].TextValue,
+                                                      itemTooltip[ItemTooltipString.Materia2Effect].TextValue);
+            if (itemTooltip[ItemTooltipString.Materia3].TextValue != string.Empty)
+                output += string.Format("\t{0}\t{1}\n", itemTooltip[ItemTooltipString.Materia3].TextValue,
+                                                      itemTooltip[ItemTooltipString.Materia3Effect].TextValue);
+            if (itemTooltip[ItemTooltipString.Materia4].TextValue != string.Empty)
+                output += string.Format("\t{0}\t{1}\n", itemTooltip[ItemTooltipString.Materia4].TextValue,
+                                                      itemTooltip[ItemTooltipString.Materia4Effect].TextValue);
+            if (itemTooltip[ItemTooltipString.Materia5].TextValue != string.Empty)
+                output += string.Format("\t{0}\t{1}\n", itemTooltip[ItemTooltipString.Materia5].TextValue,
+                                                      itemTooltip[ItemTooltipString.Materia5Effect].TextValue);
+        }
+
+        if ((itemTooltip.Fields & ItemTooltipFields.CraftingAndRepairs) == ItemTooltipFields.CraftingAndRepairs)
+        {
+            output += string.Format("{0}\n", itemTooltip[ItemTooltipString.RepairLevel].TextValue);
+            output += string.Format("{0}\n", itemTooltip[ItemTooltipString.Materials].TextValue);
+            output += string.Format("{0}\n", itemTooltip[ItemTooltipString.QuickRepairs].TextValue);
+            output += string.Format("{0}\n", itemTooltip[ItemTooltipString.MateriaMelding].TextValue);
+
+            //Putting capabilities in here for now until I find something that breaks this rule
+            output += string.Format("{0}\n", itemTooltip[ItemTooltipString.Capabilities].TextValue);
+        }
+        if (itemTooltip[ItemTooltipString.ShopSellingPrice].TextValue != string.Empty)
+            output += string.Format("{0}\n", itemTooltip[ItemTooltipString.ShopSellingPrice].TextValue);
+        if (itemTooltip[ItemTooltipString.ControllerControls].TextValue != string.Empty)
+            output += string.Format("{0}\n", itemTooltip[ItemTooltipString.ControllerControls].TextValue);
+        CopyToClipboard("Item Tooltip", output);
     }
 
     private void GetActionTooltip(ActionTooltip actionTooltip, HoveredAction action)
     {
         hoveredAction = actionTooltip;
         hoveredItem = null;
-        //CopyToClipboard("Action Tooltip", actionTooltip[ActionTooltipString.Name].TextValue);
+    }
+
+    private void PritnActionTooltip(ActionTooltip actionTooltip)
+    {
+        string output;
+        output = string.Format("{0}\n", actionTooltip[ActionTooltipString.Name].TextValue);
+
+        bool insertNewLine = false;
+        if (actionTooltip[ActionTooltipString.Type].TextValue != string.Empty)
+        {
+            output += string.Format("{0}", actionTooltip[ActionTooltipString.Type].TextValue);
+            insertNewLine = true;
+        }
+        if ((actionTooltip.Fields & ActionTooltipFields.Range) == ActionTooltipFields.Range)
+        {
+            output += string.Format("\t{0}{1}", actionTooltip[ActionTooltipString.RangeLabel].TextValue,
+                                                actionTooltip[ActionTooltipString.Range].TextValue);
+            insertNewLine = true;
+        }
+        if ((actionTooltip.Fields & ActionTooltipFields.Radius) == ActionTooltipFields.Radius)
+        {
+            output += string.Format("\t{0}{1}", actionTooltip[ActionTooltipString.RadiusLabel].TextValue,
+                                                actionTooltip[ActionTooltipString.Radius].TextValue);
+            insertNewLine = true;
+        }
+        if (insertNewLine) output += "\n";
+
+        if ((actionTooltip.Fields & ActionTooltipFields.Cast) == ActionTooltipFields.Cast)
+            output += string.Format("{0}: {1}\n", actionTooltip[ActionTooltipString.CastLabel].TextValue,
+                                                actionTooltip[ActionTooltipString.Cast].TextValue);
+        if ((actionTooltip.Fields & ActionTooltipFields.Recast) == ActionTooltipFields.Recast)
+            output += string.Format("{0}: {1}\n", actionTooltip[ActionTooltipString.RecastLabel].TextValue,
+                                                actionTooltip[ActionTooltipString.Recast].TextValue);
+        if ((actionTooltip.Fields & ActionTooltipFields.Cost) == ActionTooltipFields.Cost)
+            output += string.Format("{0}: {1}\n", actionTooltip[ActionTooltipString.CostLabel].TextValue,
+                                                  actionTooltip[ActionTooltipString.Cost].TextValue);
+
+        if ((actionTooltip.Fields & ActionTooltipFields.Description) == ActionTooltipFields.Description)
+            output += string.Format("{0}\n", actionTooltip[ActionTooltipString.Description].TextValue);
+        if ((actionTooltip.Fields & ActionTooltipFields.Acquired) == ActionTooltipFields.Acquired)
+            output += string.Format("{0}", actionTooltip[ActionTooltipString.Acquired].TextValue);
+        if ((actionTooltip.Fields & ActionTooltipFields.Affinity) == ActionTooltipFields.Affinity)
+            output += string.Format("\t{0}", actionTooltip[ActionTooltipString.Affinity].TextValue);
+
+        CopyToClipboard("Action Tooltip", output);
     }
 
     public void Dispose()
